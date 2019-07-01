@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Socket.io</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <style>
+        .garden {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border: 5px solid #CCC;
+            border-radius: 10px;
+        }
+
+        .ball {
+            position: absolute;
+            top: 90px;
+            left: 90px;
+            width: 20px;
+            height: 20px;
+            background: green;
+            border-radius: 100%;
+        }
+    </style>
+
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+
+
+    <h1>High up bottom textf
+
+    </h1>
+
+    <p><input type="button" value="Poke the server" id="poke" /></p>
+
+
+    <div class="garden">
+        <div class="ball"></div>
+    </div>
+
+    <pre class="output"></pre>
+
+    <script>
+        var ball = document.querySelector('.ball');
+        var garden = document.querySelector('.garden');
+        var output = document.querySelector('.output');
+
+        var maxX = garden.clientWidth - ball.clientWidth;
+        var maxY = garden.clientHeight - ball.clientHeight;
+
+        function handleOrientation(event) {
+            console.log(event.gamma)
+            console.log(event.beta)
+            var x = event.beta; // In degree in the range [-180,180]
+            var y = event.gamma; // In degree in the range [-90,90]
+
+            output.innerHTML = "beta : " + x + "\n";
+            output.innerHTML += "gamma: " + y + "\n";
+
+            // Because we don't want to have the device upside down
+            // We constrain the x value to the range [-90,90]
+            if (x > 90) {
+                x = 90
+            };
+            if (x < -90) {
+                x = -90
+            };
+
+            // To make computation easier we shift the range of 
+            // x and y to [0,180]
+            x += 90;
+            y += 90;
+
+            // 10 is half the size of the ball
+            // It center the positioning point to the center of the ball
+            let ballX = maxX * x / 180 - 10
+            let ballY = maxY * y / 180 - 10
+
+            if (ballX > maxX) {
+                window.alert('death')
+            }
+
+            if (ballY > maxY) {
+                window.alert('death')
+            }
+
+            ball.style.top = (maxX * x / 180 - 10) + "px";
+            ball.style.left = (maxY * y / 180 - 10) + "px";
+        }
+
+        window.addEventListener('deviceorientation', handleOrientation);
+    </script>
+
+    <script>
+        var socket = io.connect('http://192.168.0.104:8080');
+
+        // The visitor is asked for their username...
+        var username = prompt('What\'s your username?');
+
+        // It's sent with the signal "little_newbie" (to differentiate it from "message")
+        socket.emit('little_newbie', username);
+
+        // A dialog box is displayed when the server sends us a "message"
+        socket.on('message', function (message) {
+            alert('The server has a message for you: ' + message);
+        })
+
+        // When the button is clicked, a "message" is sent to the server
+        $('#poke').click(function () {
+            socket.emit('message', 'Hi server, how are you?');
+        })
+    </script>
+</body>
+
+</html>
